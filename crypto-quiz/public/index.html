@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CryptoQuiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #080b14;
+  --bg2: #0d1220;
+  --bg3: #121929;
+  --accent: #00f5c4;
+  --accent2: #7b61ff;
+  --accent3: #ff6b35;
+  --text: #e8eaf0;
+  --muted: #6b7280;
+  --border: rgba(255,255,255,0.07);
+  --c1: #7b61ff;
+  --c2: #ff6b35;
+  --c3: #00c4f5;
+  --c4: #f5c400;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans Thai',sans-serif;overflow-x:hidden}
+
+/* grid bg */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,245,196,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,196,0.03) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;
+}
+
+.app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem}
+
+/* ── SCREENS ── */
+.screen{width:100%;max-width:680px;animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.hidden{display:none!important}
+
+/* ── LOGO ── */
+.logo{font-family:'Space Mono',monospace;font-size:1.75rem;font-weight:700;letter-spacing:-1px;margin-bottom:.25rem}
+.logo span{color:var(--accent)}
+.tagline{font-size:.8rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:2.5rem}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem}
+.card-sm{padding:1.25rem 1.5rem;border-radius:12px}
+
+/* ── INPUT ── */
+.input-wrap{display:flex;gap:.75rem;margin-bottom:1rem}
+input[type=text]{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;color:var(--text);font-family:'Noto Sans Thai',sans-serif;font-size:.95rem;outline:none;transition:border .2s}
+input[type=text]:focus{border-color:var(--accent)}
+input[type=text]::placeholder{color:var(--muted)}
+
+/* ── BUTTONS ── */
+.btn{padding:.75rem 1.5rem;border:none;border-radius:10px;cursor:pointer;font-family:'Noto Sans Thai',sans-serif;font-size:.95rem;font-weight:600;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#080b14}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-secondary{background:var(--bg3);border:1px solid var(--border);color:var(--text)}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:#3d1515;border:1px solid #7f2020;color:#ff8080}
+.btn-danger:hover{background:#5a1f1f}
+.btn-full{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ── LOBBY ── */
+.lobby-count{font-family:'Space Mono',monospace;font-size:3.5rem;font-weight:700;color:var(--accent);text-align:center;line-height:1}
+.lobby-label{text-align:center;color:var(--muted);font-size:.8rem;letter-spacing:1px;text-transform:uppercase;margin-top:.5rem;margin-bottom:2rem}
+.host-controls{display:flex;gap:.75rem;margin-top:1.5rem}
+
+/* ── COUNTDOWN ── */
+.countdown-num{font-family:'Space Mono',monospace;font-size:6rem;font-weight:700;color:var(--accent);text-align:center;animation:pulse 1s ease infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.8}}
+
+/* ── QUESTION ── */
+.q-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;font-size:.8rem;color:var(--muted)}
+.q-num{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent)}
+.q-score{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent2)}
+
+.timer-ring-wrap{display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem;position:relative}
+.timer-ring{transform:rotate(-90deg)}
+.timer-ring-bg{fill:none;stroke:var(--bg3);stroke-width:4}
+.timer-ring-arc{fill:none;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .95s linear,stroke .5s}
+.timer-num{position:absolute;font-family:'Space Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--text)}
+
+.q-text{font-size:1.1rem;font-weight:600;text-align:center;line-height:1.6;margin-bottom:1.5rem;min-height:60px;padding:0 .5rem}
+
+.opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.opt-btn{padding:1rem;border:1.5px solid transparent;border-radius:12px;cursor:pointer;font-family:'Noto Sans Thai',sans-serif;font-size:.9rem;font-weight:600;text-align:left;display:flex;align-items:center;gap:.75rem;transition:all .15s;color:#fff;position:relative;overflow:hidden}
+.opt-btn::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.05);opacity:0;transition:opacity .15s}
+.opt-btn:hover:not(.disabled)::before{opacity:1}
+.opt-btn.disabled{cursor:default}
+.opt-btn.correct{outline:2px solid #00f5c4;box-shadow:0 0 20px rgba(0,245,196,.3)}
+.opt-btn.wrong{opacity:.35}
+.opt-btn[data-i="0"]{background:rgba(123,97,255,.2);border-color:rgba(123,97,255,.4)}
+.opt-btn[data-i="1"]{background:rgba(255,107,53,.2);border-color:rgba(255,107,53,.4)}
+.opt-btn[data-i="2"]{background:rgba(0,196,245,.2);border-color:rgba(0,196,245,.4)}
+.opt-btn[data-i="3"]{background:rgba(245,196,0,.2);border-color:rgba(245,196,0,.4)}
+.opt-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.opt-btn[data-i="0"] .opt-icon{background:var(--c1)}
+.opt-btn[data-i="1"] .opt-icon{background:var(--c2)}
+.opt-btn[data-i="2"] .opt-icon{background:var(--c3)}
+.opt-btn[data-i="3"] .opt-icon{background:var(--c4)}
+
+/* ── FEEDBACK ── */
+.feedback{padding:.75rem 1rem;border-radius:10px;font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:.5rem;margin-top:.75rem;opacity:0;transform:translateY(4px);transition:all .3s}
+.feedback.show{opacity:1;transform:translateY(0)}
+.feedback.ok{background:rgba(0,245,196,.12);border:1px solid rgba(0,245,196,.3);color:var(--accent)}
+.feedback.fail{background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.3);color:#ff8080}
+
+/* ── LEADERBOARD ── */
+.lb-title{font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.lb-row{display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;border-radius:10px;margin-bottom:.4rem;background:var(--bg3);border:1px solid var(--border);transition:all .3s}
+.lb-row.top1{background:rgba(245,196,0,.1);border-color:rgba(245,196,0,.3)}
+.lb-row.top2{background:rgba(180,180,180,.08);border-color:rgba(180,180,180,.2)}
+.lb-row.top3{background:rgba(205,127,50,.08);border-color:rgba(205,127,50,.2)}
+.lb-row.me{outline:1.5px solid var(--accent)}
+.lb-rank{font-family:'Space Mono',monospace;font-size:.85rem;font-weight:700;width:24px;text-align:center;color:var(--muted)}
+.lb-row.top1 .lb-rank{color:var(--c4)}
+.lb-row.top2 .lb-rank{color:#c0c0c0}
+.lb-row.top3 .lb-rank{color:#cd7f32}
+.lb-name{flex:1;font-size:.9rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-score{font-family:'Space Mono',monospace;font-size:.85rem;font-weight:700;color:var(--accent)}
+
+/* ── STATUS BAR ── */
+.status{text-align:center;font-size:.8rem;color:var(--muted);margin-top:1rem;font-family:'Space Mono',monospace}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:6px;animation:blink 1.2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── WAITING ── */
+.waiting-icon{font-size:2.5rem;text-align:center;margin-bottom:.75rem;opacity:.6}
+.waiting-text{text-align:center;color:var(--muted);font-size:.9rem}
+
+/* ── ENDED ── */
+.trophy{font-size:4rem;text-align:center;margin-bottom:1rem}
+.ended-score{font-family:'Space Mono',monospace;font-size:2.5rem;font-weight:700;color:var(--accent);text-align:center}
+.ended-label{text-align:center;color:var(--muted);font-size:.8rem;margin-bottom:1.5rem}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- JOIN SCREEN -->
+  <div id="s-join" class="screen">
+    <div style="text-align:center">
+      <div class="logo">Crypto<span>Quiz</span></div>
+      <div class="tagline">⚡ Real-time Crypto Battle</div>
+    </div>
+    <div class="card">
+      <div style="margin-bottom:1.25rem;font-size:.9rem;color:var(--muted)">ใส่ชื่อของคุณเพื่อเข้าร่วม</div>
+      <div class="input-wrap">
+        <input type="text" id="inp-name" placeholder="ชื่อผู้เล่น..." maxlength="20" autocomplete="off"/>
+        <button class="btn btn-primary" onclick="joinGame()">เข้าร่วม</button>
+      </div>
+      <div id="join-err" style="color:#ff8080;font-size:.8rem;min-height:16px"></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:1.25rem 0"/>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.75rem">🎮 Host เกม (เปิดบนหน้าจอของ host)</div>
+      <div class="host-controls">
+        <button class="btn btn-secondary" style="flex:1" onclick="joinAsHost()">เข้าสู่ระบบ Host</button>
+      </div>
+    </div>
+    <div class="status"><span class="dot"></span>กำลังเชื่อมต่อ...</div>
+  </div>
+
+  <!-- LOBBY SCREEN (player) -->
+  <div id="s-lobby" class="screen hidden">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div class="logo">Crypto<span>Quiz</span></div>
+      <div class="tagline">รอเกมเริ่มต้น</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="lobby-count" id="lobby-count">0</div>
+      <div class="lobby-label">ผู้เล่นออนไลน์</div>
+      <div style="background:var(--bg3);border-radius:10px;padding:.75rem 1rem;font-size:.85rem;color:var(--muted)">
+        ⏳ รอ host เริ่มเกม...
+      </div>
+    </div>
+  </div>
+
+  <!-- HOST SCREEN -->
+  <div id="s-host" class="screen hidden">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div class="logo">Crypto<span>Quiz</span> <span style="font-size:.9rem;color:var(--accent2);font-family:'Space Mono',monospace">[HOST]</span></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+        <div>
+          <div class="lobby-count" id="host-count" style="font-size:3rem">0</div>
+          <div style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:1px">ผู้เล่อออนไลน์</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.25rem">12 คำถาม • 15 วิ/ข้อ</div>
+          <div style="font-size:.75rem;color:var(--accent)">Crypto Edition 🪙</div>
+        </div>
+      </div>
+      <div id="host-log" style="background:var(--bg3);border-radius:10px;padding:.75rem 1rem;font-size:.8rem;color:var(--muted);height:80px;overflow-y:auto;margin-bottom:1.25rem;font-family:'Space Mono',monospace"></div>
+      <div style="display:flex;gap:.75rem">
+        <button class="btn btn-primary" id="btn-start" style="flex:1" onclick="hostStart()">▶ เริ่มเกม</button>
+        <button class="btn btn-danger" onclick="hostReset()">↺ รีเซ็ต</button>
+      </div>
+    </div>
+    <!-- host leaderboard live -->
+    <div id="host-lb" style="margin-top:1rem"></div>
+  </div>
+
+  <!-- COUNTDOWN -->
+  <div id="s-countdown" class="screen hidden" style="text-align:center">
+    <div class="tagline" style="margin-bottom:1rem">เกมจะเริ่มใน...</div>
+    <div class="countdown-num" id="cd-num">5</div>
+    <div style="margin-top:1rem;color:var(--muted);font-size:.85rem">เตรียมตัวให้พร้อม! 🚀</div>
+  </div>
+
+  <!-- QUESTION SCREEN -->
+  <div id="s-question" class="screen hidden">
+    <div class="q-header">
+      <span class="q-num" id="q-num">1 / 12</span>
+      <span class="q-score" id="q-score">0 pts</span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:1rem">
+      <div class="timer-ring-wrap">
+        <svg class="timer-ring" width="64" height="64" viewBox="0 0 64 64">
+          <circle class="timer-ring-bg" cx="32" cy="32" r="26"/>
+          <circle class="timer-ring-arc" id="timer-arc" cx="32" cy="32" r="26"
+            stroke="var(--accent)"
+            stroke-dasharray="163.4"
+            stroke-dashoffset="0"/>
+        </svg>
+        <span class="timer-num" id="timer-num">15</span>
+      </div>
+    </div>
+    <div class="q-text" id="q-text"></div>
+    <div class="opts-grid" id="opts-grid"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <!-- WAITING (after answer) screen note is inside feedback -->
+
+  <!-- LEADERBOARD SCREEN -->
+  <div id="s-leaderboard" class="screen hidden">
+    <div style="margin-bottom:1rem">
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.25rem;font-family:'Space Mono',monospace">CORRECT ANSWER</div>
+      <div id="lb-answer" style="background:rgba(0,245,196,.1);border:1px solid rgba(0,245,196,.3);border-radius:10px;padding:.75rem 1rem;font-size:.95rem;font-weight:600;color:var(--accent)"></div>
+    </div>
+    <div class="lb-title">🏆 Leaderboard</div>
+    <div id="lb-rows"></div>
+    <div style="text-align:center;margin-top:1rem;color:var(--muted);font-size:.8rem;font-family:'Space Mono',monospace">ข้อถัดไปใน <span id="lb-countdown">6</span> วิ...</div>
+  </div>
+
+  <!-- ENDED SCREEN -->
+  <div id="s-ended" class="screen hidden">
+    <div class="card" style="text-align:center">
+      <div class="trophy" id="end-trophy">🏆</div>
+      <div style="font-size:.7rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:1rem">Final Score</div>
+      <div class="ended-score" id="end-score">0</div>
+      <div class="ended-label" id="end-label"></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin-bottom:1rem"/>
+      <div class="lb-title">🏆 Final Leaderboard</div>
+      <div id="end-lb"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const WS_URL = location.protocol === 'https:' ? 'wss://' : 'ws://' + location.host;
+let ws, myName='', myScore=0, isHost=false, lbTimer=null;
+const ICONS = ['▲','◆','●','■'];
+const CIRCUMFERENCE = 2 * Math.PI * 26; // 163.4
+
+function $(id){return document.getElementById(id)}
+
+function show(id){
+  ['s-join','s-lobby','s-host','s-countdown','s-question','s-leaderboard','s-ended']
+    .forEach(s => $(s).classList.toggle('hidden', s !== id));
+}
+
+function connect() {
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => {
+    $('join-err').textContent = '';
+    document.querySelector('.status').innerHTML = '<span class="dot"></span>เชื่อมต่อแล้ว';
+  };
+  ws.onmessage = (e) => handleMsg(JSON.parse(e.data));
+  ws.onclose = () => {
+    document.querySelector('.status').innerHTML = '<span class="dot" style="background:#ff8080"></span>การเชื่อมต่อขาด กำลังเชื่อมใหม่...';
+    setTimeout(connect, 2000);
+  };
+  ws.onerror = () => ws.close();
+}
+
+function send(data){if(ws && ws.readyState===1) ws.send(JSON.stringify(data))}
+
+function joinGame(){
+  const name = $('inp-name').value.trim();
+  if(!name){$('join-err').textContent='กรุณาใส่ชื่อก่อน';return}
+  myName = name; isHost = false;
+  send({type:'join', name});
+}
+
+function joinAsHost(){
+  isHost = true; myName = 'HOST';
+  show('s-host');
+  // host doesn't send join
+}
+
+function hostStart(){ send({type:'start'}) }
+function hostReset(){ send({type:'reset'}) }
+
+function handleMsg(msg){
+  switch(msg.type){
+    case 'welcome':
+      if(isHost){
+        $('host-count').textContent = msg.players;
+        return;
+      }
+      document.querySelector('.status').innerHTML = '<span class="dot"></span>เชื่อมต่อแล้ว';
+      break;
+
+    case 'error':
+      $('join-err').textContent = msg.text;
+      break;
+
+    case 'joined':
+      show('s-lobby');
+      break;
+
+    case 'playerJoined':
+      $('lobby-count').textContent = msg.players;
+      if(isHost){
+        $('host-count').textContent = msg.players;
+        addHostLog(`✦ ${msg.name} เข้าร่วม (${msg.players} คน)`);
+      }
+      break;
+
+    case 'playerLeft':
+      $('lobby-count').textContent = msg.players;
+      if(isHost) $('host-count').textContent = msg.players;
+      break;
+
+    case 'countdown':
+      show('s-countdown');
+      let c = msg.sec;
+      $('cd-num').textContent = c;
+      const cdI = setInterval(()=>{
+        c--;
+        if($('cd-num')) $('cd-num').textContent = c;
+        if(c<=0) clearInterval(cdI);
+      },1000);
+      break;
+
+    case 'question':
+      showQuestion(msg);
+      break;
+
+    case 'answerResult':
+      myScore = msg.score;
+      $('q-score').textContent = myScore.toLocaleString() + ' pts';
+      const fb = $('feedback');
+      if(msg.correct){
+        fb.innerHTML = `✅ ถูกต้อง! +${msg.pts} คะแนน`;
+        fb.className = 'feedback show ok';
+      } else {
+        fb.innerHTML = `❌ ผิด! ไม่ได้รับคะแนน`;
+        fb.className = 'feedback show fail';
+      }
+      // disable all opts
+      document.querySelectorAll('.opt-btn').forEach(b=>b.classList.add('disabled'));
+      break;
+
+    case 'leaderboard':
+      showLeaderboard(msg);
+      break;
+
+    case 'ended':
+      showEnded(msg);
+      break;
+
+    case 'reset':
+      myScore=0;
+      if(isHost){
+        $('host-count').textContent = msg.players;
+        addHostLog('↺ รีเซ็ตเกมแล้ว');
+        $('host-lb').innerHTML='';
+        show('s-host');
+      } else {
+        show('s-lobby');
+        $('lobby-count').textContent = msg.players;
+      }
+      break;
+  }
+}
+
+let timerInterval=null;
+function showQuestion(msg){
+  if(!isHost) show('s-question');
+  clearInterval(timerInterval);
+  clearInterval(lbTimer);
+  $('feedback').className = 'feedback';
+
+  $('q-num').textContent = `${msg.index+1} / ${msg.total}`;
+  $('q-score').textContent = myScore.toLocaleString() + ' pts';
+  $('q-text').textContent = msg.question;
+
+  const grid = $('opts-grid');
+  grid.innerHTML = msg.opts.map((o,i)=>`
+    <button class="opt-btn" data-i="${i}" onclick="answer(${i})">
+      <span class="opt-icon">${ICONS[i]}</span>${o}
+    </button>
+  `).join('');
+
+  // timer ring
+  let timeLeft = msg.timeMs / 1000;
+  const arc = $('timer-arc');
+  const tnum = $('timer-num');
+  const updateArc = (t) => {
+    const offset = CIRCUMFERENCE * (1 - t / (msg.timeMs/1000));
+    arc.style.strokeDashoffset = offset;
+    const pct = t / (msg.timeMs/1000);
+    arc.style.stroke = pct > .5 ? 'var(--accent)' : pct > .25 ? 'var(--c4)' : 'var(--c2)';
+    tnum.textContent = Math.ceil(t);
+  };
+  updateArc(timeLeft);
+  timerInterval = setInterval(()=>{
+    timeLeft -= .1;
+    if(timeLeft < 0) timeLeft = 0;
+    updateArc(timeLeft);
+    if(timeLeft <= 0) clearInterval(timerInterval);
+  }, 100);
+
+  if(isHost){
+    // host sees question status
+    show('s-host');
+    addHostLog(`❓ ข้อ ${msg.index+1}: ${msg.question.slice(0,40)}...`);
+  }
+}
+
+function answer(idx){
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b=>b.classList.add('disabled'));
+  clearInterval(timerInterval);
+  send({type:'answer', idx});
+}
+
+function showLeaderboard(msg){
+  clearInterval(lbTimer);
+  if(!isHost){
+    show('s-leaderboard');
+    $('lb-answer').textContent = '✅ ' + msg.correctText;
+    renderLB('lb-rows', msg.board, myName);
+
+    let cd = 6;
+    $('lb-countdown').textContent = cd;
+    lbTimer = setInterval(()=>{
+      cd--;
+      if($('lb-countdown')) $('lb-countdown').textContent = cd;
+      if(cd<=0) clearInterval(lbTimer);
+    },1000);
+  } else {
+    renderLBHost(msg.board);
+    addHostLog(`📊 Leaderboard: ${msg.board[0]?.name||'—'} นำอยู่ที่ ${msg.board[0]?.score||0} pts`);
+  }
+}
+
+function renderLB(containerId, board, highlightName=''){
+  const medals = ['🥇','🥈','🥉'];
+  $(containerId).innerHTML = board.map((p,i)=>`
+    <div class="lb-row ${i===0?'top1':i===1?'top2':i===2?'top3':''} ${p.name===highlightName?'me':''}">
+      <span class="lb-rank">${medals[i]||i+1}</span>
+      <span class="lb-name">${p.name}${p.name===highlightName?' 👈':''}</span>
+      <span class="lb-score">${p.score.toLocaleString()}</span>
+    </div>
+  `).join('');
+}
+
+function renderLBHost(board){
+  $('host-lb').innerHTML = `
+    <div class="card card-sm">
+      <div class="lb-title">🏆 Live Leaderboard</div>
+      ${board.map((p,i)=>`
+        <div class="lb-row ${i===0?'top1':i===1?'top2':i===2?'top3':''}">
+          <span class="lb-rank">${i+1}</span>
+          <span class="lb-name">${p.name}</span>
+          <span class="lb-score">${p.score.toLocaleString()}</span>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function showEnded(msg){
+  show('s-ended');
+  clearInterval(timerInterval);
+  clearInterval(lbTimer);
+  const me = msg.board.find(p=>p.name===myName);
+  const rank = msg.board.findIndex(p=>p.name===myName)+1;
+  const trophy = rank===1?'🏆':rank===2?'🥈':rank===3?'🥉':'⭐';
+  if(!isHost){
+    $('end-trophy').textContent = trophy;
+    $('end-score').textContent = (me?.score||myScore).toLocaleString();
+    $('end-label').textContent = rank ? `อันดับที่ ${rank} จาก ${msg.board.length} คน` : '';
+  } else {
+    $('end-trophy').textContent = '🏁';
+    $('end-score').textContent = 'จบเกม!';
+    $('end-label').textContent = `ผู้เล่นทั้งหมด ${msg.board.length} คน`;
+  }
+  renderLB('end-lb', msg.board, myName);
+}
+
+function addHostLog(txt){
+  const log = $('host-log');
+  log.innerHTML += txt + '\n';
+  log.scrollTop = log.scrollHeight;
+}
+
+$('inp-name').addEventListener('keydown', e=>{ if(e.key==='Enter') joinGame(); });
+connect();
+</script>
+</body>
+</html>

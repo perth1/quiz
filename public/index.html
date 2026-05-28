@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CryptoQuiz ⚡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07090f;--bg2:#0c1018;--bg3:#111620;--bg4:#161d2a;
+  --accent:#00e5b0;--accent2:#7c5cfc;--accent3:#ff5e3a;--accent4:#f5c518;
+  --text:#dde3ef;--muted:#505a72;--border:rgba(255,255,255,0.06);
+  --c0:#7c5cfc;--c1:#ff5e3a;--c2:#00b8e0;--c3:#f5c518;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans Thai',sans-serif;-webkit-tap-highlight-color:transparent}
+
+/* grid overlay */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(124,92,252,.12),transparent 70%)}
+
+.wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem}
+.screen{width:100%;max-width:620px}
+.hidden{display:none!important}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+@keyframes ticker{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 rgba(0,229,176,0)}50%{box-shadow:0 0 24px rgba(0,229,176,.25)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+.anim-in{animation:fadeUp .38s cubic-bezier(.22,1,.36,1) both}
+.anim-pop{animation:pop .35s cubic-bezier(.22,1,.36,1) both}
+
+/* ═══ LOGO ═══ */
+.logo{font-family:'Space Mono',monospace;font-size:1.6rem;font-weight:700;letter-spacing:-1.5px;line-height:1}
+.logo em{font-style:normal;color:var(--accent)}
+.sub{font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:.3rem}
+
+/* ═══ CARD ═══ */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.75rem}
+.card+.card{margin-top:.75rem}
+
+/* ═══ INPUT ═══ */
+.field{display:flex;gap:.6rem;margin-bottom:.75rem}
+input[type=text]{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;color:var(--text);font-family:'Noto Sans Thai',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
+input[type=text]:focus{border-color:var(--accent)}
+input::placeholder{color:var(--muted)}
+.err{color:#ff6060;font-size:.78rem;min-height:18px;margin-top:-.2rem}
+
+/* ═══ BUTTONS ═══ */
+.btn{padding:.7rem 1.4rem;border:none;border-radius:10px;cursor:pointer;font-family:'Noto Sans Thai',sans-serif;font-size:.9rem;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:.4rem}
+.btn-primary{background:var(--accent);color:#07090f}
+.btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.25);color:#ff7070}
+.btn-danger:hover{background:rgba(255,60,60,.2)}
+.btn-full{width:100%;justify-content:center}
+.btn:disabled{opacity:.35;pointer-events:none}
+
+/* ═══ LOBBY ═══ */
+.big-num{font-family:'Space Mono',monospace;font-size:4rem;font-weight:700;color:var(--accent);line-height:1;animation:glow 2.5s ease infinite}
+.lbl{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:.3rem}
+
+/* ═══ COUNTDOWN ═══ */
+.cd-num{font-family:'Space Mono',monospace;font-size:7rem;font-weight:700;color:var(--accent);text-align:center;animation:ticker 1s ease infinite;line-height:1}
+
+/* ═══ QUESTION ═══ */
+.q-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem}
+.q-tag{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--muted)}
+.q-pts{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--accent2);font-weight:700}
+
+/* timer */
+.timer-wrap{position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:1rem}
+.timer-svg{transform:rotate(-90deg)}
+.t-bg{fill:none;stroke:var(--bg3);stroke-width:5}
+.t-arc{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .25s linear,stroke .4s}
+.t-num{position:absolute;font-family:'Space Mono',monospace;font-size:1.15rem;font-weight:700}
+
+.q-text{font-size:1.05rem;font-weight:600;line-height:1.65;text-align:center;margin-bottom:1.25rem;padding:0 .5rem;min-height:52px}
+
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.opt{padding:.9rem .85rem;border-radius:12px;border:1.5px solid transparent;cursor:pointer;
+  font-family:'Noto Sans Thai',sans-serif;font-size:.88rem;font-weight:600;
+  display:flex;align-items:center;gap:.65rem;text-align:left;color:#fff;
+  transition:transform .12s,filter .12s;position:relative;overflow:hidden;line-height:1.4}
+.opt::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.04);opacity:0;transition:opacity .15s}
+.opt:hover:not(.locked)::after{opacity:1}
+.opt:active:not(.locked){transform:scale(.97)}
+.opt.locked{cursor:default}
+.opt.correct{outline:2px solid var(--accent)!important;box-shadow:0 0 22px rgba(0,229,176,.28)}
+.opt.wrong{opacity:.3;filter:grayscale(.4)}
+.opt.selected-wrong{opacity:.55;filter:grayscale(.2)}
+
+.opt[data-i="0"]{background:rgba(124,92,252,.18);border-color:rgba(124,92,252,.35)}
+.opt[data-i="1"]{background:rgba(255,94,58,.18);border-color:rgba(255,94,58,.35)}
+.opt[data-i="2"]{background:rgba(0,184,224,.18);border-color:rgba(0,184,224,.35)}
+.opt[data-i="3"]{background:rgba(245,197,24,.18);border-color:rgba(245,197,24,.35)}
+
+.opt-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.opt[data-i="0"] .opt-icon{background:var(--c0)}
+.opt[data-i="1"] .opt-icon{background:var(--c1)}
+.opt[data-i="2"] .opt-icon{background:var(--c2)}
+.opt[data-i="3"] .opt-icon{background:var(--c3)}
+
+/* feedback */
+.fb{margin-top:.75rem;padding:.7rem 1rem;border-radius:10px;font-size:.85rem;font-weight:600;
+  display:flex;align-items:center;gap:.5rem;opacity:0;transition:opacity .3s;min-height:40px}
+.fb.show{opacity:1}
+.fb.ok{background:rgba(0,229,176,.1);border:1px solid rgba(0,229,176,.25);color:var(--accent)}
+.fb.fail{background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.25);color:#ff8080}
+.fb.wait{background:var(--bg3);border:1px solid var(--border);color:var(--muted)}
+
+/* ═══ RESULT / LB ═══ */
+.ans-reveal{background:rgba(0,229,176,.08);border:1px solid rgba(0,229,176,.2);border-radius:10px;
+  padding:.75rem 1rem;font-size:.9rem;font-weight:600;color:var(--accent);margin-bottom:1rem}
+.lb-head{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem;font-family:'Space Mono',monospace}
+
+.lb-row{display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;border-radius:9px;
+  margin-bottom:.35rem;background:var(--bg3);border:1px solid var(--border);animation:fadeUp .3s both}
+.lb-row:nth-child(1){animation-delay:.05s}.lb-row:nth-child(2){animation-delay:.1s}
+.lb-row:nth-child(3){animation-delay:.15s}.lb-row:nth-child(n+4){animation-delay:.2s}
+.lb-row.gold{background:rgba(245,197,24,.08);border-color:rgba(245,197,24,.25)}
+.lb-row.silver{background:rgba(192,192,192,.06);border-color:rgba(192,192,192,.18)}
+.lb-row.bronze{background:rgba(205,127,50,.06);border-color:rgba(205,127,50,.18)}
+.lb-row.me{outline:1.5px solid var(--accent)}
+.lb-rank{font-family:'Space Mono',monospace;font-size:.78rem;font-weight:700;width:22px;text-align:center;color:var(--muted)}
+.lb-row.gold .lb-rank{color:var(--c3)}
+.lb-row.silver .lb-rank{color:#c0c0c0}
+.lb-row.bronze .lb-rank{color:#cd7f32}
+.lb-name{flex:1;font-size:.88rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-score{font-family:'Space Mono',monospace;font-size:.82rem;font-weight:700;color:var(--accent)}
+.next-in{text-align:center;font-family:'Space Mono',monospace;font-size:.72rem;color:var(--muted);margin-top:.9rem}
+
+/* ═══ ENDED ═══ */
+.trophy{font-size:3.5rem;text-align:center;margin-bottom:.75rem}
+.final-score{font-family:'Space Mono',monospace;font-size:2.8rem;font-weight:700;color:var(--accent);text-align:center;line-height:1}
+.final-rank{text-align:center;color:var(--muted);font-size:.8rem;margin:.4rem 0 1.5rem}
+
+/* ═══ HOST ═══ */
+.host-tag{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--accent2);letter-spacing:1px;text-transform:uppercase;margin-left:.4rem}
+.host-log{background:var(--bg3);border-radius:9px;padding:.65rem .85rem;font-size:.72rem;color:var(--muted);height:72px;overflow-y:auto;font-family:'Space Mono',monospace;margin-bottom:1rem;line-height:1.8}
+.hrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem}
+.hactions{display:flex;gap:.6rem;margin-top:0}
+
+/* ═══ STATUS ═══ */
+.status{text-align:center;font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted);margin-top:.9rem}
+.dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-right:5px;animation:blink 1.4s ease infinite}
+.dot.red{background:#ff6060}
+
+/* mobile */
+@media(max-width:480px){
+  .opts{grid-template-columns:1fr}
+  .big-num{font-size:3rem}
+  .cd-num{font-size:5rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- JOIN -->
+<div id="s-join" class="screen anim-in">
+  <div style="text-align:center;margin-bottom:1.75rem">
+    <div class="logo">Crypto<em>Quiz</em></div>
+    <div class="sub">⚡ Real-time Crypto Battle</div>
+  </div>
+  <div class="card">
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">ใส่ชื่อเพื่อเข้าร่วมเกม</div>
+    <div class="field">
+      <input type="text" id="inp-name" placeholder="ชื่อของคุณ..." maxlength="20" autocomplete="off"/>
+      <button class="btn btn-primary" onclick="doJoin()">เข้าร่วม</button>
+    </div>
+    <div class="err" id="join-err"></div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:1.1rem 0"/>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:.65rem">🎮 สำหรับ Host</div>
+    <button class="btn btn-ghost btn-full" onclick="goHost()">เข้าสู่หน้า Host →</button>
+  </div>
+  <div class="status" id="status-bar"><span class="dot"></span>กำลังเชื่อมต่อ...</div>
+</div>
+
+<!-- LOBBY (player) -->
+<div id="s-lobby" class="screen hidden anim-in">
+  <div style="text-align:center;margin-bottom:1.5rem">
+    <div class="logo">Crypto<em>Quiz</em></div>
+    <div class="sub">รอเกมเริ่มต้น</div>
+  </div>
+  <div class="card" style="text-align:center">
+    <div class="big-num" id="lobby-count">0</div>
+    <div class="lbl">ผู้เล่นออนไลน์</div>
+    <div style="margin-top:1.25rem;background:var(--bg3);border-radius:9px;padding:.75rem;font-size:.8rem;color:var(--muted)">
+      ⏳ รอ host กด "เริ่มเกม"...
+    </div>
+  </div>
+</div>
+
+<!-- HOST -->
+<div id="s-host" class="screen hidden anim-in">
+  <div style="display:flex;align-items:baseline;gap:.5rem;margin-bottom:1.25rem">
+    <div class="logo">Crypto<em>Quiz</em></div>
+    <span class="host-tag">[HOST]</span>
+  </div>
+  <div class="card">
+    <div class="hrow">
+      <div>
+        <div class="big-num" style="font-size:3rem" id="host-count">0</div>
+        <div class="lbl">ผู้เล่อออนไลน์</div>
+      </div>
+      <div style="text-align:right;font-size:.75rem;color:var(--muted)">
+        <div>12 คำถาม · 15 วิ/ข้อ</div>
+        <div style="color:var(--accent);margin-top:.2rem">Crypto Edition 🪙</div>
+      </div>
+    </div>
+    <div class="host-log" id="host-log"></div>
+    <div class="hactions">
+      <button class="btn btn-primary" id="btn-start" style="flex:1" onclick="hostAction('start')">▶ เริ่มเกม</button>
+      <button class="btn btn-danger" onclick="hostAction('reset')">↺ รีเซ็ต</button>
+    </div>
+  </div>
+  <div id="host-lb-wrap"></div>
+</div>
+
+<!-- COUNTDOWN -->
+<div id="s-countdown" class="screen hidden" style="text-align:center">
+  <div class="sub" style="margin-bottom:1rem">เกมจะเริ่มใน...</div>
+  <div class="cd-num" id="cd-num">5</div>
+  <div style="margin-top:1rem;color:var(--muted);font-size:.85rem">เตรียมตัวให้พร้อม! 🚀</div>
+</div>
+
+<!-- QUESTION -->
+<div id="s-question" class="screen hidden">
+  <div class="q-bar">
+    <span class="q-tag" id="q-tag">1 / 12</span>
+    <span class="q-pts" id="q-pts">0 pts</span>
+  </div>
+  <div class="timer-wrap">
+    <svg class="timer-svg" width="68" height="68" viewBox="0 0 68 68">
+      <circle class="t-bg" cx="34" cy="34" r="28"/>
+      <circle class="t-arc" id="t-arc" cx="34" cy="34" r="28"
+        stroke="var(--accent)" stroke-dasharray="175.9" stroke-dashoffset="0"/>
+    </svg>
+    <span class="t-num" id="t-num">15</span>
+  </div>
+  <div class="q-text" id="q-text"></div>
+  <div class="opts" id="opts"></div>
+  <div class="fb" id="fb"></div>
+</div>
+
+<!-- RESULT (leaderboard after each Q) -->
+<div id="s-result" class="screen hidden anim-in">
+  <div class="ans-reveal" id="ans-reveal"></div>
+  <div class="lb-head">🏆 Leaderboard</div>
+  <div id="result-lb"></div>
+  <div class="next-in" id="next-in">ข้อถัดไปใน <span id="next-sec">6</span> วิ...</div>
+</div>
+
+<!-- ENDED -->
+<div id="s-ended" class="screen hidden anim-in">
+  <div class="card" style="text-align:center">
+    <div class="trophy" id="end-trophy">🏆</div>
+    <div style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:.65rem">FINAL SCORE</div>
+    <div class="final-score" id="end-score">0</div>
+    <div class="final-rank" id="end-rank"></div>
+    <hr style="border:none;border-top:1px solid var(--border);margin-bottom:1rem"/>
+    <div class="lb-head">🏆 Final Leaderboard</div>
+    <div id="end-lb"></div>
+    <button class="btn btn-ghost btn-full" style="margin-top:1rem" onclick="location.reload()">↺ กลับหน้าหลัก</button>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let myPid='', myName='', myScore=0, isHost=false;
+let pollTimer=null, cdTimer=null, timerRAF=null;
+let lastPhase='', lastQ=-1;
+let myAnsweredQ=-1, myLastAns=-1;
+const CIRC = 2*Math.PI*28; // 175.9
+const ICONS=['▲','◆','●','■'];
+const MEDALS=['🥇','🥈','🥉'];
+
+const $=id=>document.getElementById(id);
+
+// ─── Screen ──────────────────────────────────────────────────────────────────
+const SCREENS=['s-join','s-lobby','s-host','s-countdown','s-question','s-result','s-ended'];
+function show(id){SCREENS.forEach(s=>$(s).classList.toggle('hidden',s!==id))}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function api(path,body){
+  return fetch('/api/'+path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{}).then(r=>r.json());
+}
+
+function log(txt){
+  const el=$('host-log');if(!el)return;
+  el.innerHTML+=txt+'\n';el.scrollTop=el.scrollHeight;
+}
+
+function renderLB(containerId,board,highlightName=''){
+  $(containerId).innerHTML=board.map((p,i)=>`
+    <div class="lb-row ${i===0?'gold':i===1?'silver':i===2?'bronze':''} ${p.name===highlightName?'me':''}">
+      <span class="lb-rank">${MEDALS[i]||p.rank}</span>
+      <span class="lb-name">${p.name}${p.name===highlightName?' 👈':''}</span>
+      <span class="lb-score">${p.score.toLocaleString()}</span>
+    </div>`).join('');
+}
+
+// ─── Join ─────────────────────────────────────────────────────────────────────
+async function doJoin(){
+  const name=$('inp-name').value.trim();
+  if(!name){$('join-err').textContent='กรุณาใส่ชื่อก่อน';return}
+  $('join-err').textContent='';
+  try{
+    const r=await api('join',{name});
+    if(r.error){$('join-err').textContent=r.error;return}
+    myPid=r.pid; myName=r.name;
+    show('s-lobby');
+    startPoll();
+  }catch{$('join-err').textContent='เชื่อมต่อไม่ได้ ลองใหม่'}
+}
+
+function goHost(){
+  isHost=true;
+  show('s-host');
+  startPoll();
+}
+
+$('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')doJoin()});
+
+// ─── Host actions ─────────────────────────────────────────────────────────────
+async function hostAction(action){
+  try{
+    const r=await api('host',{action});
+    if(r.error){log('⚠ '+r.error);return}
+    log(action==='start'?'▶ เริ่มเกมแล้ว':'↺ รีเซ็ตแล้ว');
+  }catch{log('⚠ เชื่อมต่อไม่ได้')}
+}
+
+// ─── Poll loop ────────────────────────────────────────────────────────────────
+function startPoll(){
+  clearInterval(pollTimer);
+  poll();
+  pollTimer=setInterval(poll,1200);
+}
+
+async function poll(){
+  try{
+    const params=new URLSearchParams();
+    if(myPid) params.set('pid',myPid);
+    if(myName) params.set('name',encodeURIComponent(myName));
+    const data=await fetch('/api/poll?'+params).then(r=>r.json());
+    handleState(data);
+  }catch{}
+}
+
+// ─── State handler ────────────────────────────────────────────────────────────
+function handleState(d){
+  const phaseChanged=d.phase!==lastPhase;
+  const qChanged=d.currentQ!==lastQ;
+  lastPhase=d.phase; lastQ=d.currentQ;
+
+  // update status bar
+  const sb=$('status-bar');
+  if(sb) sb.innerHTML='<span class="dot"></span>เชื่อมต่อแล้ว';
+
+  if(d.phase==='lobby'){
+    if(isHost){
+      show('s-host');
+      $('host-count').textContent=d.playerCount;
+    } else if(myPid){
+      show('s-lobby');
+      $('lobby-count').textContent=d.playerCount;
+    }
+    return;
+  }
+
+  if(d.phase==='countdown'){
+    if(!isHost) show('s-countdown');
+    else{ show('s-host'); log(`⏳ countdown...`); }
+    runCountdown(d.countdownLeft||5);
+    return;
+  }
+
+  if(d.phase==='question'){
+    if(qChanged||phaseChanged) setupQuestion(d);
+    else updateTimer(d.timeLeft);
+    if(isHost){ show('s-host'); if(qChanged||phaseChanged) log(`❓ ข้อ ${d.currentQ+1}/12`); }
+    return;
+  }
+
+  if(d.phase==='result'){
+    if(!isHost) showResult(d);
+    else{
+      show('s-host');
+      if(phaseChanged||qChanged){
+        log(`✅ ข้อ ${d.currentQ+1} เฉลย: ${d.correctText}`);
+        renderHostLB(d.leaderboard||[]);
+      }
+    }
+    return;
+  }
+
+  if(d.phase==='ended'){
+    showEnded(d);
+    clearInterval(pollTimer);
+    return;
+  }
+}
+
+// ─── Countdown ────────────────────────────────────────────────────────────────
+let cdLast=-1;
+function runCountdown(sec){
+  if(Math.round(sec)===cdLast) return;
+  cdLast=Math.round(sec);
+  const el=$('cd-num');
+  if(el){ el.textContent=cdLast; el.style.animation='none'; requestAnimationFrame(()=>el.style.animation='ticker 1s ease infinite'); }
+}
+
+// ─── Question ─────────────────────────────────────────────────────────────────
+let currentOpts=[];
+function setupQuestion(d){
+  if(isHost) return;
+  cancelAnimationFrame(timerRAF);
+  myAnsweredQ= d.myAnswered ? d.currentQ : myAnsweredQ;
+  show('s-question');
+  $('q-tag').textContent=`${d.currentQ+1} / ${d.total}`;
+  $('q-pts').textContent=(d.myScore||myScore).toLocaleString()+' pts';
+  $('q-text').textContent=d.question;
+  currentOpts=d.opts;
+
+  const answered=d.myAnswered;
+
+  $('opts').innerHTML=d.opts.map((o,i)=>`
+    <button class="opt${answered?' locked':''}" data-i="${i}" onclick="submitAnswer(${i})">
+      <span class="opt-icon">${ICONS[i]}</span>${o}
+    </button>`).join('');
+
+  const fb=$('fb'); fb.className='fb'; fb.textContent='';
+  if(answered){
+    fb.className='fb wait show';
+    fb.textContent='⏳ รอผู้เล่นคนอื่น...';
+  }
+
+  updateTimer(d.timeLeft);
+}
+
+function updateTimer(t){
+  if(t==null) return;
+  const arc=$('t-arc'), tnum=$('t-num');
+  if(!arc||!tnum) return;
+  const pct=Math.max(0,t/15);
+  arc.style.strokeDashoffset=CIRC*(1-pct);
+  arc.style.stroke=pct>.5?'var(--accent)':pct>.25?'var(--c3)':'var(--c1)';
+  tnum.textContent=Math.ceil(t);
+}
+
+async function submitAnswer(idx){
+  const btns=document.querySelectorAll('.opt');
+  btns.forEach(b=>b.classList.add('locked'));
+  myLastAns=idx;
+  try{
+    const r=await api('answer',{pid:myPid,idx});
+    if(r.error){ showFb(false,0,r.error); return; }
+    myScore=r.score;
+    $('q-pts').textContent=myScore.toLocaleString()+' pts';
+    showFb(r.correct,r.pts);
+    const fb=$('fb');
+    setTimeout(()=>{
+      if(fb.className.includes('ok')||fb.className.includes('fail')){
+        fb.className='fb wait show';
+        fb.textContent='⏳ รอผู้เล่นคนอื่น...';
+      }
+    },2200);
+  }catch{ showFb(false,0,'ส่งคำตอบไม่ได้'); }
+}
+
+function showFb(correct,pts,msg=''){
+  const fb=$('fb');
+  if(correct){
+    fb.className='fb ok show';
+    fb.innerHTML=`✅ ถูกต้อง! +${pts} คะแนน`;
+  } else if(msg){
+    fb.className='fb fail show';
+    fb.innerHTML=`⚠ ${msg}`;
+  } else {
+    fb.className='fb fail show';
+    fb.innerHTML=`❌ ผิด! ไม่ได้รับคะแนน`;
+  }
+}
+
+// ─── Result ───────────────────────────────────────────────────────────────────
+let nextSecTimer=null;
+function showResult(d){
+  show('s-result');
+  $('ans-reveal').textContent='✅ คำตอบที่ถูก: '+d.correctText;
+  renderLB('result-lb',d.leaderboard||[],myName);
+
+  if(d.isLast){
+    $('next-in').textContent='กำลังสรุปผล...';
+  } else {
+    clearInterval(nextSecTimer);
+    let secs=d.nextIn||6;
+    $('next-sec').textContent=secs;
+    nextSecTimer=setInterval(()=>{
+      secs=Math.max(0,secs-1);
+      const el=$('next-sec');
+      if(el) el.textContent=secs;
+      if(secs<=0) clearInterval(nextSecTimer);
+    },1000);
+  }
+}
+
+// ─── Ended ────────────────────────────────────────────────────────────────────
+function showEnded(d){
+  clearInterval(pollTimer);
+  show('s-ended');
+  const board=d.leaderboard||[];
+  const me=board.find(p=>p.name===myName);
+  const rank=me?.rank||'?';
+  const trophy=rank===1?'🏆':rank===2?'🥈':rank===3?'🥉':rank<=10?'⭐':'🎮';
+  if(!isHost){
+    $('end-trophy').textContent=trophy;
+    $('end-score').textContent=(me?.score||myScore).toLocaleString();
+    $('end-rank').textContent=`อันดับที่ ${rank} จาก ${board.length} คน`;
+  } else {
+    $('end-trophy').textContent='🏁';
+    $('end-score').textContent='จบเกม!';
+    $('end-rank').textContent=`ผู้เล่นทั้งหมด ${board.length} คน`;
+  }
+  renderLB('end-lb',board,myName);
+}
+
+// ─── Host LB ─────────────────────────────────────────────────────────────────
+function renderHostLB(board){
+  $('host-lb-wrap').innerHTML=`
+    <div class="card" style="margin-top:.75rem">
+      <div class="lb-head">🏆 Live Leaderboard</div>
+      ${board.slice(0,10).map((p,i)=>`
+        <div class="lb-row ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">
+          <span class="lb-rank">${MEDALS[i]||p.rank}</span>
+          <span class="lb-name">${p.name}</span>
+          <span class="lb-score">${p.score.toLocaleString()}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+// quick ping to confirm API alive
+fetch('/api/poll').then(r=>r.json()).then(()=>{
+  const sb=$('status-bar');
+  if(sb) sb.innerHTML='<span class="dot"></span>เชื่อมต่อแล้ว';
+}).catch(()=>{
+  const sb=$('status-bar');
+  if(sb) sb.innerHTML='<span class="dot red"></span>เชื่อมต่อไม่ได้';
+});
+</script>
+</body>
+</html>

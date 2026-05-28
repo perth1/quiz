@@ -334,11 +334,40 @@ $('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')doJoin()});
 
 // ─── Host actions ─────────────────────────────────────────────────────────────
 async function hostAction(action){
+  const btn=$('btn-start');
+  if(btn) btn.disabled=true;
   try{
     const r=await api('host',{action});
-    if(r.error){log('⚠ '+r.error);return}
-    log(action==='start'?'▶ เริ่มเกมแล้ว':'↺ รีเซ็ตแล้ว');
-  }catch{log('⚠ เชื่อมต่อไม่ได้')}
+    if(r.error){
+      showHostErr(r.error);
+    } else {
+      clearHostErr();
+      log(action==='start'?'▶ เริ่มเกมแล้ว':'↺ รีเซ็ตแล้ว');
+    }
+  }catch{
+    showHostErr('เชื่อมต่อไม่ได้');
+  }finally{
+    if(btn) btn.disabled=false;
+  }
+}
+
+function showHostErr(msg){
+  let el=$('host-err');
+  if(!el){
+    el=document.createElement('div');
+    el.id='host-err';
+    el.style.cssText='background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.25);border-radius:9px;padding:.6rem .9rem;font-size:.8rem;color:#ff8080;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem';
+    const actions=$('btn-start')?.parentElement;
+    if(actions) actions.parentElement.insertBefore(el,actions);
+  }
+  el.innerHTML='⚠ '+msg;
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.remove(),4000);
+}
+
+function clearHostErr(){
+  const el=$('host-err');
+  if(el) el.remove();
 }
 
 // ─── Poll loop ────────────────────────────────────────────────────────────────
@@ -371,7 +400,11 @@ function handleState(d){
   if(d.phase==='lobby'){
     if(isHost){
       show('s-host');
+      const prev=parseInt($('host-count').textContent)||0;
       $('host-count').textContent=d.playerCount;
+      if(d.playerCount!==prev && d.playerCount>0){
+        log(`👤 ผู้เล่นเข้าร่วม — รวม ${d.playerCount} คน`);
+      }
     } else if(myPid){
       show('s-lobby');
       $('lobby-count').textContent=d.playerCount;
@@ -381,7 +414,10 @@ function handleState(d){
 
   if(d.phase==='countdown'){
     if(!isHost) show('s-countdown');
-    else{ show('s-host'); log(`⏳ countdown...`); }
+    else{
+      show('s-host');
+      if(phaseChanged) log(`⏳ countdown เริ่มแล้ว...`);
+    }
     runCountdown(d.countdownLeft||5);
     return;
   }
